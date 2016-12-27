@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.Media.Capture;
 using Windows.Media.MediaProperties;
@@ -41,12 +38,12 @@ namespace WAVRecorder.UWP
             return true;
         }
 
-        public async void StartRecordingAsync()
+        public async Task StartRecordingAsync()
         {
             await mediaCapture.StartRecordToStreamAsync(mediaProfile, (InMemoryRandomAccessStream)RawWAVStream);
         }
 
-        public async void StopRecordingAsync()
+        public async Task StopRecordingAsync()
         {
             await mediaCapture.StopRecordAsync();
         }

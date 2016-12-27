@@ -1,55 +1,87 @@
 using Android.Media;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WAVRecorder.Android
 {
     public class WAVRecorder : IWAVRecorder
     {
-        public IDisposable RawWAVStream { get; private set; }
-
-        public System.IO.Stream WAVStream
-        {
+        public IDisposable RawWAVStream {
             get
             {
-                return null;
+                return WAVStream;
             }
         }
+
+        public System.IO.Stream WAVStream { get; private set; }
 
         private AudioRecord audioRecorder;
         private byte[] audioBuffer;
 
         //See: https://raw.githubusercontent.com/xamarin/monodroid-samples/master/Example_WorkingWithAudio/Example_WorkingWithAudio/LowLevelRecordAudio.cs
-        public async Task<bool> RequestPermissionsAndInitAsync()
+        public Task<bool> RequestPermissionsAndInitAsync()
         {
             audioBuffer = new Byte[100000];
             audioRecorder = new AudioRecord(
-                // Hardware source of recording.
                 AudioSource.Mic,
-                // Frequency
                 16000,
-                // Mono or stereo
                 ChannelIn.Mono,
-                // Audio encoding
                 Encoding.Pcm16bit,
-                // Length of the audio clip.
                 audioBuffer.Length
             );
 
-            return true;
+            WAVStream = new MemoryStream();
+
+            return new Task<bool>(() => true);
         }
 
-        public async void StartRecordingAsync()
+        private bool endRecording;
+
+        private async Task HandleBufferAsync()
+        {
+            while (true)
+            {
+                if (endRecording)
+                {
+                    endRecording = false;
+                    break;
+                }
+
+                try
+                {
+                    // Keep reading the buffer while there is audio input.
+                    int numBytes = await audioRecorder.ReadAsync(audioBuffer, 0, audioBuffer.Length);
+                    //TODO: does this reset the audioRecorder?
+                    await WAVStream.WriteAsync(audioBuffer, 0, numBytes);
+                }
+                catch (Exception ex)
+                {
+                    Console.Out.WriteLine(ex.Message);
+                    //break;
+                }
+            }
+        }
+
+        public Task StartRecordingAsync()
         {
             audioRecorder.StartRecording();
             // Off line this so that we do not block the UI thread.
-            await ReadAudioAsync();
+            HandleBufferAsync();
+
+            return new Task(() => { });
         }
 
-        public async void StopRecordingAsync()
+        public Task StopRecordingAsync()
         {
+            endRecording = true;
+            while (endRecording == true)
+            {
+                Thread.Sleep(500);
+            }
+
+            return new Task(() => { });
         }
     }
 }

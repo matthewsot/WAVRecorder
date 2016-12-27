@@ -22,8 +22,8 @@ namespace WAVRecorder
 
         IDisposable RawWAVStream { get; }
 
-        void StartRecordingAsync();
+        Task StartRecordingAsync();
 
-        void StopRecordingAsync();
+        Task StopRecordingAsync();
     }
 }
