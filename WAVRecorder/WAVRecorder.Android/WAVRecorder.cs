@@ -34,6 +34,8 @@ namespace WAVRecorder.Android
 
             WAVStream = new MemoryStream();
 
+            //TODO: write the WAV header?
+
             return new Task<bool>(() => true);
         }
 
